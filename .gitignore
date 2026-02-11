@@ -1,0 +1,3 @@
+axi4_vip/sim/axi4_sim
+axi4_vip/sim/*.vcd
+axi4_vip/sim/*.log
