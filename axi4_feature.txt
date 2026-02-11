@@ -1,0 +1,23 @@
+AMBA AXI4（Full）协议相较 AXI3 进行了优化和简化，以下是其支持的所有关键特性：
+
+独立的读写通道：五个独立通道（Write Address、Write Data、Write Response、Read Address、Read Data），允许读写并行进行。
+突发传输（Burst）：
+支持三种突发类型：FIXED、INCR、WRAP。
+最大突发长度 256（AWLEN/ARLEN = 255）。
+WRAP 突发长度限制为 2、4、8、16。
+
+未对齐传输支持：允许首拍地址未对齐，自动调整。
+多个未完成事务（Outstanding Transactions）：通过 ID 标签支持乱序完成（out-of-order completion）和多个未完成事务。
+独占访问（Exclusive Access）：AWLOCK/ARLOCK 为 1 表示独占访问，支持独占监视器（exclusive monitor）。
+QoS（Quality of Service）：AWQOS/ARQOS（4-bit），用于仲裁优先级。
+地址区域（Region）：AWREGION/ARREGION（4-bit），用于区分不同地址区域。
+用户侧带信号（User Signals）：AWUSER、ARUSER、WUSER、BUSER、RUSER，可自定义宽度（包括 0）。
+缓存属性（Cache Hints）：AWCACHE/ARCACHE（4-bit），支持 Bufferable、Cacheable、Read-Allocate、Write-Allocate 等组合。
+保护属性（Protection）：AWPROT/ARPROT（3-bit）：数据/指令、特权/用户、安全/非安全。
+低功耗支持：明确定义了时钟和复位行为，支持时钟门控。
+字节选通（Byte Strobe）：WSTRB 精确控制每个字节的写入。
+响应类型：OKAY、EXOKAY（独占成功）、SLVERR、DECERR。
+移除 AXI3 遗留特性：去掉了 WID 信号（写数据通道不再携带 ID），去掉了遗留的 Locked 传输（仅保留 Exclusive）。
+向后兼容 AXI4-Lite：AXI4-Lite 是 AXI4 的子集（单拍、无突发、无 ID 等），AXI4 主机可以连接 AXI4-Lite 从机（通过互联适配）。
+支持窄传输（Narrow Transfers）：AWSIZE/ARSIZE 可以小于数据总线宽度，实现窄传输。
+乱序响应：同一 ID 的响应必须按顺序，但不同 ID 可以乱序。
