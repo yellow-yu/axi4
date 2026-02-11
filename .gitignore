@@ -1,0 +1,13 @@
+# Simulation outputs
+sim/work/
+sim/logs/
+sim/rtl_test
+sim/transcript
+sim/vsim.wlf
+sim/modelsim.ini
+*.vcd
+*.wlf
+
+# Compiled objects
+*.o
+*.d
