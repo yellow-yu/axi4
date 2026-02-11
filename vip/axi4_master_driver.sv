@@ -106,14 +106,12 @@ class axi4_master_driver extends uvm_driver #(axi4_seq_item);
     vif.awvalid  <= 1'b0;
 
     // Phase 2: Drive Write Data Channel
+    // Drive data immediately after AW handshake (no extra posedge delay)
     for (int beat = 0; beat <= item.len; beat++) begin
-      @(posedge vif.aclk);
       vif.wdata  <= item.data[beat];
       vif.wstrb  <= item.wstrb[beat];
       vif.wlast  <= (beat == item.len) ? 1'b1 : 1'b0;
       vif.wvalid <= 1'b1;
-
-      // Wait for W handshake
       @(posedge vif.aclk);
       while (!vif.wready) @(posedge vif.aclk);
     end
@@ -121,7 +119,7 @@ class axi4_master_driver extends uvm_driver #(axi4_seq_item);
     vif.wlast  <= 1'b0;
 
     // Phase 3: Wait for Write Response
-    @(posedge vif.aclk);
+    // Drive bready immediately (same cycle as last W handshake)
     vif.bready <= 1'b1;
     @(posedge vif.aclk);
     while (!vif.bvalid) @(posedge vif.aclk);
@@ -156,6 +154,7 @@ class axi4_master_driver extends uvm_driver #(axi4_seq_item);
     vif.arvalid <= 1'b0;
 
     // Phase 2: Receive Read Data
+    // Drive rready immediately (same cycle as AR handshake)
     item.rdata = new[item.len + 1];
     item.rresp = new[item.len + 1];
     vif.rready <= 1'b1;

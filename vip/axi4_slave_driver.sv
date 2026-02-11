@@ -104,7 +104,7 @@ class axi4_slave_driver extends uvm_component;
       end
 
       // === Send Write Response ===
-      @(posedge vif.aclk);
+      // Drive immediately (same cycle as last W handshake)
       vif.bid    <= aw_id;
       vif.bresp  <= (aw_lock) ? 2'b01 : 2'b00;  // EXOKAY for exclusive, OKAY otherwise
       vif.bvalid <= 1'b1;
@@ -145,13 +145,13 @@ class axi4_slave_driver extends uvm_component;
       axi4_calc_beat_addrs(ar_addr, ar_size, ar_burst, ar_len, beat_addrs);
 
       // === Send Read Data ===
+      // Drive data immediately for each beat (no extra wait cycle)
       for (int beat = 0; beat <= ar_len; beat++) begin
         // Optional delay
         if (enable_random_delay) begin
           repeat ($urandom_range(0, max_delay)) @(posedge vif.aclk);
         end
 
-        @(posedge vif.aclk);
         vif.rid    <= ar_id;
         vif.rdata  <= read_beat_data(beat_addrs[beat], ar_size);
         vif.rresp  <= (ar_lock) ? 2'b01 : 2'b00;
