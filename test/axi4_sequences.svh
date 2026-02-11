@@ -90,12 +90,27 @@ class axi4_wrap_burst_seq extends axi4_base_seq;
 
         `uvm_info("SEQ", "Starting WRAP burst sequence", UVM_MEDIUM)
 
+        // Test 1: WRAP bursts starting at wrap boundary (no actual wrapping)
         for (int i = 0; i < 4; i++) begin
             bit [AXI4_VIP_ADDR_W-1:0] target_addr;
             int wlen = wrap_lens[i];
-            // Address aligned to burst_size (8 bytes)
             target_addr = 32'h0002_0000 + i * 256;
             target_addr = target_addr & 32'hFFFFFFF8;
+
+            gen_random_data(wlen + 1, wdata);
+            gen_full_strb(wlen + 1, wstrb);
+            do_write_data(target_addr, wlen[7:0], $clog2(AXI4_VIP_STRB_W),
+                          AXI4_WRAP, 0, 0, wdata, wstrb);
+            do_read(target_addr, wlen[7:0], $clog2(AXI4_VIP_STRB_W),
+                    AXI4_WRAP, 0, 0, rsp);
+        end
+
+        // Test 2: WRAP burst with actual address wrapping
+        // 4 beats of 8 bytes = 32-byte wrap region
+        // Start at offset 0x10 within the region => beats wrap around
+        begin
+            bit [AXI4_VIP_ADDR_W-1:0] target_addr = 32'h0002_1010; // offset 0x10 in 32-byte region
+            int wlen = 3; // 4 beats
 
             gen_random_data(wlen + 1, wdata);
             gen_full_strb(wlen + 1, wstrb);
@@ -315,15 +330,16 @@ class axi4_unaligned_seq extends axi4_base_seq;
 
         `uvm_info("SEQ", "Starting unaligned transfer sequence", UVM_MEDIUM)
 
-        // Unaligned INCR burst: size=4 bytes, start addr offset by 4
+        // Unaligned INCR burst: full-width (8 bytes) starting at 4-byte offset
+        // addr=0x0005_0004 with size=3 (8 bytes) => unaligned (0x50004 % 8 = 4)
         begin
             bit [AXI4_VIP_ADDR_W-1:0] target_addr = 32'h0005_0004;
-            int sz = 2; // 4 bytes
+            int sz = 3; // 8 bytes (full width)
             int target_len = 3; // 4 beats
-            int num_bytes = 1 << sz;
+            int num_bytes = 1 << sz; // 8
             bit [AXI4_VIP_ADDR_W-1:0] aligned_addr;
 
-            aligned_addr = (target_addr / num_bytes) * num_bytes;
+            aligned_addr = (target_addr / num_bytes) * num_bytes; // 0x50000
 
             wdata = new[target_len + 1];
             wstrb = new[target_len + 1];
@@ -333,13 +349,13 @@ class axi4_unaligned_seq extends axi4_base_seq;
                 int low_lane, high_lane;
 
                 if (i == 0)
-                    beat_addr = target_addr;
+                    beat_addr = target_addr; // 0x50004
                 else
                     beat_addr = aligned_addr + i * num_bytes;
 
                 low_lane = beat_addr % AXI4_VIP_STRB_W;
                 if (i == 0) begin
-                    // First beat: from unaligned addr to aligned+size-1
+                    // First beat: only bytes from unaligned addr to aligned+size-1
                     high_lane = (aligned_addr + num_bytes - 1) % AXI4_VIP_STRB_W;
                 end else begin
                     high_lane = low_lane + num_bytes - 1;
