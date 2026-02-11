@@ -1,0 +1,4 @@
+axi4_vip/sim/tb_self_check
+axi4_vip/sim/*.vcd
+axi4_vip/sim/work/
+axi4_vip/sim/results/
